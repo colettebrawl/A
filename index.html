@@ -3,33 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Begrippenlijst Flashcards</title>
+    <title>Volledige Begrippenlijst - Interactieve Flashcards</title>
     <style>
         /* Algemene stijl */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f9;
+            background-color: #f8f9fa;
             color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 20px;
-            padding: 20px;
-            background: #fff;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
         }
 
         h1 {
             text-align: center;
+            margin-top: 20px;
             color: #444;
+        }
+
+        .controls, .progress {
+            text-align: center;
+            margin: 20px;
+        }
+
+        .controls button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .controls button:hover {
+            background-color: #2980b9;
         }
 
         .flashcard-container {
@@ -50,7 +58,7 @@
             width: 100%;
             height: 100%;
             position: relative;
-            transition: transform 0.7s;
+            transition: transform 0.6s;
             transform-style: preserve-3d;
         }
 
@@ -69,73 +77,125 @@
             align-items: center;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 10px;
             text-align: center;
+            padding: 10px;
         }
 
         .flashcard .front {
-            background-color: #3498db;
+            background-color: #4CAF50;
             color: #fff;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
         }
 
         .flashcard .back {
-            background-color: #ecf0f1;
+            background-color: #f0f0f0;
             color: #333;
             transform: rotateY(180deg);
-            font-size: 16px;
+        }
+
+        .progress {
+            font-size: 18px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Begrippenlijst Flashcards</h1>
-        <div class="flashcard-container" id="flashcardContainer"></div>
+    <h1>Volledige Begrippenlijst - Interactieve Flashcards</h1>
+
+    <!-- Bedieningselementen -->
+    <div class="controls">
+        <button onclick="resetProgress()">Reset Voortgang</button>
+        <button onclick="filterCards('all')">Toon Alles</button>
+        <button onclick="filterCards('learned')">Geleerde Kaarten</button>
+        <button onclick="filterCards('unlearned')">Nog Niet Geleerd</button>
     </div>
+
+    <!-- Voortgangsindicator -->
+    <div class="progress" id="progressIndicator">Geleerde kaarten: 0 / 0</div>
+
+    <!-- Flashcards Container -->
+    <div class="flashcard-container" id="flashcardContainer"></div>
+
     <script>
-        // Begrippenlijst als array van objecten
+        // Volledige begrippenlijst
         const begrippen = [
             { term: "Communicatie", uitleg: "Het doorgeven en ontvangen van informatie." },
             { term: "Medium", uitleg: "Een middel om te communiceren." },
             { term: "Massamedia", uitleg: "Media die een groot publiek bereiken." },
             { term: "Mediasamenleving", uitleg: "Een samenleving waarin media een centrale rol speelt." },
-            { term: "Grenzoverschrijdend gedrag", uitleg: "Online gedrag waarbij iemand iets met je doet waardoor je je onveilig voelt." },
+            { term: "Grenzoverschrijdend gedrag", uitleg: "Online gedrag dat je onveilig laat voelen." },
             { term: "Omroepen", uitleg: "Organisaties die informatie uitzenden naar een groot publiek." },
             { term: "Doelgroep", uitleg: "Een groep mensen met dezelfde kenmerken en belangen." },
             { term: "On demand", uitleg: "Informatie bekijken wanneer en hoe jij het wilt." },
-            { term: "Persvrijheid", uitleg: "De vrijheid van journalisten om ongehinderd berichten te publiceren." },
-            { term: "Objectief", uitleg: "Informatie die feitelijk en waarheidsgetrouw is." },
-            { term: "Subjectief", uitleg: "Mening die gebaseerd is op gevoel of persoonlijke opvattingen." },
-            { term: "Hoor en wederhoor", uitleg: "Bij een journalistiek item beide partijen aan het woord laten." },
+            { term: "Persvrijheid", uitleg: "De vrijheid van journalisten om berichten te publiceren." },
+            { term: "Objectief", uitleg: "Feitelijke en waarheidsgetrouwe informatie." },
+            { term: "Subjectief", uitleg: "Informatie gebaseerd op meningen of gevoelens." },
             { term: "Beeldvorming", uitleg: "Het vormen van een beeld of mening over iets of iemand." },
             { term: "Selectieve waarneming", uitleg: "Bewust of onbewust kiezen wat je wilt zien of horen." },
-            { term: "Framing", uitleg: "Informatie op een bepaalde manier behandelen, vaak positief of negatief." },
-            { term: "Desinformatie", uitleg: "Informatie die niet klopt, terwijl de maker dit wel weet." },
-            { term: "Manipulatie", uitleg: "Feiten opzettelijk veranderen of weglaten om te beïnvloeden." },
-            { term: "Nepnieuws", uitleg: "Verzonnen informatie die verspreid wordt om winst of invloed te krijgen." },
-            { term: "Reclames", uitleg: "Boodschappen van bedrijven die willen dat je hun producten koopt." },
-            { term: "Online-profilering", uitleg: "Bedrijven die met behulp van cookies een digitaal profiel van je maken." }
+            { term: "Framing", uitleg: "Informatie op een positieve of negatieve manier behandelen." },
+            { term: "Desinformatie", uitleg: "Opzettelijk verspreiden van onjuiste informatie." },
+            { term: "Manipulatie", uitleg: "Feiten veranderen of verdraaien om te beïnvloeden." },
+            { term: "Nepnieuws", uitleg: "Verzonnen informatie die als nieuws wordt verspreid." },
+            { term: "Reclames", uitleg: "Boodschappen om je producten te laten kopen." },
+            { term: "Online-profilering", uitleg: "Digitale profielen maken door bedrijven met behulp van cookies." }
         ];
 
-        // Container om flashcards dynamisch toe te voegen
         const flashcardContainer = document.getElementById('flashcardContainer');
+        let learnedCards = JSON.parse(localStorage.getItem("learnedCards")) || [];
 
-        // Dynamische generatie van flashcards
-        begrippen.forEach(begrip => {
-            const card = document.createElement('div');
-            card.classList.add('flashcard');
-            card.innerHTML = `
-                <div class="flashcard-inner">
-                    <div class="front">${begrip.term}</div>
-                    <div class="back">${begrip.uitleg}</div>
-                </div>
-            `;
-            card.addEventListener('click', () => {
-                card.classList.toggle('flipped');
+        // Laadt de flashcards
+        function loadFlashcards(filter = "all") {
+            flashcardContainer.innerHTML = "";
+            begrippen.forEach((begrip, index) => {
+                if (filter === "learned" && !learnedCards.includes(index)) return;
+                if (filter === "unlearned" && learnedCards.includes(index)) return;
+
+                const card = document.createElement("div");
+                card.classList.add("flashcard");
+                if (learnedCards.includes(index)) card.classList.add("flipped");
+
+                card.innerHTML = `
+                    <div class="flashcard-inner">
+                        <div class="front">${begrip.term}</div>
+                        <div class="back">${begrip.uitleg}</div>
+                    </div>
+                `;
+
+                card.addEventListener("click", () => toggleCard(card, index));
+                flashcardContainer.appendChild(card);
             });
-            flashcardContainer.appendChild(card);
-        });
+            updateProgress();
+        }
+
+        // Kaart flippen
+        function toggleCard(card, index) {
+            card.classList.toggle("flipped");
+            if (!learnedCards.includes(index)) learnedCards.push(index);
+            localStorage.setItem("learnedCards", JSON.stringify(learnedCards));
+            updateProgress();
+        }
+
+        // Voortgang bijwerken
+        function updateProgress() {
+            const progressIndicator = document.getElementById("progressIndicator");
+            progressIndicator.textContent = `Geleerde kaarten: ${learnedCards.length} / ${begrippen.length}`;
+        }
+
+        // Filteren van kaarten
+        function filterCards(filter) {
+            loadFlashcards(filter);
+        }
+
+        // Voortgang resetten
+        function resetProgress() {
+            localStorage.removeItem("learnedCards");
+            learnedCards = [];
+            loadFlashcards();
+        }
+
+        // Initialisatie
+        loadFlashcards();
     </script>
 </body>
 </html>
